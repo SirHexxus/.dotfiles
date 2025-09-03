@@ -1,0 +1,7 @@
+alias ld='ls -Al --group-directories-first'
+alias neofetch='fastfetch'
+alias nf='neofetch'
+alias clnf='clear && neofetch'
+alias mkcd='{ IFS= read -r d && mkdir "$d" && cd "$d"; } <<<'
+alias cdls='{ IFS= read -r d && cd "$d" && ld; } <<<'
+alias ipls='ip a | grep "inet "'
