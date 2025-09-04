@@ -99,22 +99,47 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # alias to simplify dotfile management
 alias dotfiles='/usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME"'
 
-# Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+# Set environment
+export EDITOR='vim'
+export GREP_COLOR='1;36'
+export HISTCONTROL='ignoredups'
+export HISTSIZE=5000
+export HISTFILESIZE=5000
+export LSCOLORS='ExGxbEaECxxEhEhBaDaCaD'
+export PAGER='less'
+export TZ='America/New_York'
+export VISUAL='vim'
 
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
+# Support colors in less
+export LESS_TERMCAP_mb=$(tput bold; tput setaf 1)
+export LESS_TERMCAP_md=$(tput bold; tput setaf 1)
+export LESS_TERMCAP_me=$(tput sgr0)
+export LESS_TERMCAP_se=$(tput sgr0)
+export LESS_TERMCAP_so=$(tput bold; tput setaf 3; tput setab 4)
+export LESS_TERMCAP_ue=$(tput sgr0)
+export LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 2)
+export LESS_TERMCAP_mr=$(tput rev)
+export LESS_TERMCAP_mh=$(tput dim)
+export LESS_TERMCAP_ZN=$(tput ssubm)
+export LESS_TERMCAP_ZV=$(tput rsubm)
+export LESS_TERMCAP_ZO=$(tput ssupm)
+export LESS_TERMCAP_ZW=$(tput rsupm)
 
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
-if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-  fi
-fi
+# Shell Options
+shopt -s cdspell
+shopt -s checkwinsize
+shopt -s extglob
+
+# Bash Version >= 4
+shopt -s autocd   2>/dev/null || true
+shopt -s dirspell 2>/dev/null || true
+
+# Load external files
+. ~/.bash_aliases    2>/dev/null || true
+. ~/.bashrc.local    2>/dev/null || true
+
+# load completion
+. /etc/bash/bash_completion 2>/dev/null ||
+	. ~/.bash_completion 2>/dev/null
+
+true
