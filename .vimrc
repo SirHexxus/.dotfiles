@@ -11,27 +11,40 @@ set nocompatible		" Disable VI Compatibility
 " ---------------------------------------------
 " Init - plugins
 " ---------------------------------------------
+" Automatically install vim-plug
+let data_dir = has('nvim') ? stdpath('data') . '/site' : '~/.vim'
+if empty(glob(data_dir . '/autoload/plug.vim'))
+  silent execute '!curl -fLo '.data_dir.'/autoload/plug.vim --create-dirs  https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+endif
+
 call plug#begin()
+
 Plug 'embark-theme/vim', { 'as': 'embark', 'branch': 'main' }
 Plug 'preservim/vim-markdown'
+Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
 Plug 'dense-analysis/ale'
+Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-surround'
+Plug 'vim-airline/vim-airline'
+
 call plug#end()
 
 " ---------------------------------------------
 " Vim Options
 " ---------------------------------------------
-syntax on			" Enables Syntax Highlighting
-set number			" Displays line numbers
+syntax on						" Enables Syntax Highlighting
+set number						" Displays line numbers
 set backspace=indent,eol,start	" Backspace all characters
-set formatoptions-=t		" Don't add line-breaks for lines over 'textwidth' characters
-set hlsearch			" Highlight search results
-set showmatch			" Show matching brackets.
-set showmode			" Show the current mode in status line
-set showcmd			" Show partial command in status line
-set tabstop=4			" Number of spaces <tab> counts for
-set textwidth=80		" 80 columns
-set title			" Set the title
-set termguicolors		" Truecolor support
+set formatoptions-=t			" Don't add line-breaks for lines over 'textwidth' characters
+set hlsearch					" Highlight search results
+set showmatch					" Show matching brackets.
+set showmode					" Show the current mode in status line
+set showcmd						" Show partial command in status line
+set tabstop=4					" Number of spaces <tab> counts for
+set textwidth=80				" 80 columns
+set title						" Set the title
+set termguicolors				" Truecolor support
 
 " ---------------------------------------------
 " Theme / Color Scheme
@@ -111,6 +124,7 @@ highlight SpellLocal term=underline cterm=underline
 " ---------------------------------------------
 " Plugins
 " ---------------------------------------------
+let g:airline_powerline_fonts = 0
 let g:ale_linters = {
 \  'bash': [],
 \  'sh': [],
