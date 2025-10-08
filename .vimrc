@@ -10,6 +10,7 @@ set nocompatible		" Disable VI Compatibility
 
 " ---------------------------------------------
 " Init - plugins
+" A good resource for plugins: https://vimawesome.com/
 " ---------------------------------------------
 " Automatically install vim-plug
 let data_dir = has('nvim') ? stdpath('data') . '/site' : '~/.vim'
@@ -27,6 +28,14 @@ Plug 'dense-analysis/ale'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-surround'
 Plug 'vim-airline/vim-airline'
+Plug 'elzr/vim-json'
+Plug 'pangloss/vim-javascript'
+Plug 'othree/html5.vim'
+Plug 'hail2u/vim-css3-syntax'
+Plug 'ekalinin/dockerfile.vim'
+Plug 'suan/vim-instant-markdown'
+Plug 'pearofducks/ansible-vim'
+Plug 'matt-deacalion/vim-systemd-syntax'
 
 call plug#end()
 

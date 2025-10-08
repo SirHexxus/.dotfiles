@@ -101,7 +101,7 @@ alias dotfiles='/usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME"'
 
 # Set environment
 export EDITOR='vim'
-export GREP_COLOR='1;36'
+export GREP_COLOR='mt 1;36'
 export HISTCONTROL='ignoredups'
 export HISTSIZE=5000
 export HISTFILESIZE=5000
@@ -143,3 +143,10 @@ shopt -s dirspell 2>/dev/null || true
 	. ~/.bash_completion 2>/dev/null
 
 true
+
+# Add ~/.local/bin to PATH if it exists
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
