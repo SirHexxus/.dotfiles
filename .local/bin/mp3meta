@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+import sys
+from mutagen.mp3 import MP3
+from mutagen.id3 import ID3NoHeaderError
+
+def view_metadata(file_path):
+    """Reads and prints the ID3 metadata from an MP3 file, optimized for audiobooks, 
+    including both display name and tag key."""
+    
+    print(f"\n--- Metadata for: {file_path} ---")
+    
+    try:
+        # Load the MP3 file
+        audio = MP3(file_path)
+        
+        if not audio.tags:
+            print("No ID3 tags found in this file.")
+            return
+
+        # Common and Audiobook-specific metadata fields
+        # Structure: 'Display Name': ('TAG_KEY', 'Fallback Name')
+        metadata_map = {
+            'Title':          ('TIT2', 'Title'),
+            'Book/Part':      ('TRCK', 'Track Number'), 
+            'Author/Artist':  ('TPE1', 'Artist'),
+            'Series/Album':   ('TALB', 'Album'),
+            'Narrator/Group': ('TPE2', 'Album Artist'), 
+            'Year':           ('TDRC', 'Date'),
+            'Genre':          ('TCON', 'Genre'),
+            'Comment':        ('COMM::eng', 'Comment'), 
+        }
+
+        found_tags = {}
+        
+        for display_name, (tag_key, _) in metadata_map.items():
+            tag_value = None
+            
+            # Special handling for the Comment tag (COMM)
+            if tag_key.startswith('COMM'):
+                # Search all comment variations (e.g., COMM::eng, COMM::XXX)
+                for key in audio.tags.keys():
+                    if key.startswith('COMM'):
+                        tag_value = str(audio.tags[key])
+                        # Use the actual tag key found, not the generic COMM::eng
+                        found_tags[(display_name, key)] = tag_value
+                        break
+            # Standard tags
+            elif tag_key in audio.tags:
+                tag_value = str(audio.tags[tag_key])
+                found_tags[(display_name, tag_key)] = tag_value
+
+        # Print the found tags with the new format
+        if found_tags:
+            print("--- Audiobook Tags ---")
+            # We iterate through the (display_name, tag_key) tuple stored as the key
+            for (name, key), value in found_tags.items():
+                # Check for empty values before printing
+                if value and value.strip() != 'None':
+                    # NEW FORMATTING: Display Name (TAG_KEY): Value
+                    label = f"{name} ({key})"
+                    print(f"  {label.ljust(25)}: {value}")
+        else:
+            print("Could not find common ID3 tags.")
+            
+        # Audio Information remains the same
+        print(f"\n--- Audio Information ---")
+        print(f"  Duration (minutes): {int(audio.info.length // 60)}")
+        print(f"  Bitrate (kbps)    : {audio.info.bitrate // 1000}")
+        print(f"  Sample Rate (Hz)  : {audio.info.sample_rate}")
+        print(f"  Channels          : {audio.info.channels}")
+        
+    except FileNotFoundError:
+        print(f"Error: File not found at '{file_path}'")
+    except ID3NoHeaderError:
+        print("Error: This is an MP3 file, but it contains no ID3 metadata header.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python3 mp3_meta_audiobook_v2.py <path/to/file.mp3>")
+        sys.exit(1)
+    
+    mp3_file_path = sys.argv[1]
+    view_metadata(mp3_file_path)
+

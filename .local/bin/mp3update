@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import argparse
+from pathlib import Path
+from mutagen.mp3 import MP3
+from mutagen.id3 import ID3NoHeaderError, ID3, TIT2, TPE1, TALB, TPE2, TDRC, TRCK, TCON, COMM
+from tqdm import tqdm
+import re # For cleaning up filename display
+
+# --- Tag Definitions and Helper Functions ---
+
+def get_tags_to_update():
+    """Returns the ordered dictionary of ID3 tags to prompt the user for."""
+    return {
+        TIT2: ('TIT2', 'Title'),          
+        TPE1: ('TPE1', 'Author/Artist'),  
+        TALB: ('TALB', 'Series/Album'),   
+        TPE2: ('TPE2', 'Narrator/Group'), 
+        TRCK: ('TRCK', 'Book/Part (N/M)'),
+        TDRC: ('TDRC', 'Year'),           
+        TCON: ('TCON', 'Genre'),          
+    }
+
+def display_metadata_and_prompt(file_path):
+    """Displays current metadata and asks the user if they want to update."""
+    
+    print("\n" + "="*80)
+    print(f"Directory: {file_path.parent}")
+    print(f"File:      {file_path.name}")
+    print("-"*80)
+    
+    try:
+        audio = MP3(file_path)
+    except ID3NoHeaderError:
+        print("INFO: No ID3 tags found. Ready to create new tags.")
+        audio = MP3(file_path)
+        audio.add_tags()
+        
+    tags = audio.tags
+    if tags:
+        print("Current Tags:")
+        for key, display_name in get_tags_to_update().values():
+            tag_instance = tags.get(key)
+            value = str(tag_instance.text[0]) if tag_instance and tag_instance.text else ""
+            label = f"{display_name} ({key})"
+            print(f"  {label.ljust(25)}: {value}")
+    else:
+        print("No tags found.")
+
+    while True:
+        choice = input("\n[U]pdate this file, [S]kip, or [A]bort all? (U/S/A): ").strip().upper()
+        if choice in ('U', 'S', 'A'):
+            return choice
+        print("Invalid input. Please enter U, S, or A.")
+
+def interactive_update(file_path):
+    """Goes through all fields for a single file and saves changes."""
+    
+    try:
+        try:
+            audio = MP3(file_path, ID3=ID3)
+        except ID3NoHeaderError:
+            audio = MP3(file_path)
+            audio.add_tags()
+        
+        tags = audio.tags
+        changes_made = False
+        
+        print("\n--- Interactive Tag Editor ---")
+        print("Enter new value, or leave blank to skip field.")
+        
+        for TagClass, (key, display_name) in get_tags_to_update().items():
+            existing_tag = tags.get(key)
+            existing_value = str(existing_tag.text[0]) if existing_tag and existing_tag.text else ""
+            
+            # Suggestion based on filename for Title (TIT2)
+            suggested_value = ""
+            if key == 'TIT2':
+                suggested_value = Path(file_path).stem
+                suggested_value = re.sub(r'[\s_]+', ' ', suggested_value).strip()
+
+            prompt = f"{display_name} ({key}) [Current: '{existing_value}']"
+            if suggested_value:
+                prompt += f" [Suggested: '{suggested_value}']"
+            prompt += ": "
+            
+            new_value = input(prompt).strip()
+            
+            if new_value and new_value != existing_value:
+                tags[key] = TagClass(encoding=3, text=[new_value])
+                print(f"  -> Updated {display_name} to: '{new_value}'")
+                changes_made = True
+            elif new_value == existing_value:
+                print("  -> Value is the same. Skipping.")
+            else:
+                print("  -> Keeping existing value.")
+
+        # Handle Comment separately
+        comment_key = 'COMM::eng'
+        existing_comment_tag = tags.get(comment_key)
+        existing_comment_value = str(existing_comment_tag.text[0]) if existing_comment_tag and existing_comment_tag.text else ""
+        comment_prompt = f"Comment ({comment_key}) [Current: '{existing_comment_value}']: "
+        new_comment = input(comment_prompt).strip()
+        
+        if new_comment and new_comment != existing_comment_value:
+            tags[comment_key] = COMM(encoding=3, lang='eng', desc='', text=[new_comment])
+            print(f"  -> Updated Comment to: '{new_comment}'")
+            changes_made = True
+
+        if changes_made:
+            audio.save()
+            print("\n✅ Saved changes.")
+        else:
+            print("\n❌ No changes saved.")
+
+    except Exception as e:
+        print(f"\nFATAL ERROR processing {file_path.name}: {e}")
+
+# --- Main Logic for Script Execution ---
+
+def run_batch_workflow(target_path, recursive):
+    """Finds MP3s in a directory and processes them in order."""
+    
+    # Use '**/'.join(['*.mp3']) for recursive search (glob)
+    # Use '*.mp3' for non-recursive search
+    pattern = '**/*.mp3' if recursive else '*.mp3'
+    
+    mp3_files = sorted(list(Path(target_path).glob(pattern)))
+    
+    if not mp3_files:
+        print(f"No MP3 files found in {target_path} (recursive: {recursive}).")
+        return
+
+    print(f"\nFound {len(mp3_files)} MP3 files to process.")
+    
+    for file_path in tqdm(mp3_files, desc="Processing Files", unit="file", ncols=100):
+        tqdm.write(f"\n\nProcessing: {file_path}")
+        
+        action = display_metadata_and_prompt(file_path)
+        
+        if action == 'U':
+            interactive_update(file_path)
+        elif action == 'S':
+            tqdm.write("File skipped.")
+        elif action == 'A':
+            tqdm.write("Aborting batch process.")
+            break
+            
+    print("\n--- Batch processing finished. ---")
+
+
+if __name__ == "__main__":
+    
+    # 1. Setup argparse
+    parser = argparse.ArgumentParser(
+        description="Interactive utility for batch updating MP3 (audiobook) metadata.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    
+    parser.add_argument(
+        'path', 
+        nargs='?', 
+        default='.', 
+        help="Path to a single MP3 file or a directory containing MP3 files.\n"
+             "Default: current directory ('.')."
+    )
+    
+    parser.add_argument(
+        '-r', '--recursive', 
+        action='store_true', 
+        help="Search for MP3 files in all subdirectories of the target path."
+    )
+    
+    # Parse arguments
+    args = parser.parse_args()
+    
+    target = Path(args.path)
+    
+    # 2. Determine workflow based on arguments
+    if not target.exists():
+        print(f"Error: Path not found: {args.path}")
+        sys.exit(1)
+
+    if target.is_file() and target.suffix.lower() == '.mp3':
+        # Single file mode (Recursive flag is ignored)
+        print("Detected single file. Starting interactive update mode...")
+        interactive_update(target)
+        
+    elif target.is_dir():
+        # Batch mode (Recursive flag applies)
+        run_batch_workflow(target, args.recursive)
+        
+    else:
+        print("Error: Path must be a valid MP3 file or a directory.")
+        sys.exit(1)

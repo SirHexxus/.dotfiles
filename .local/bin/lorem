@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+
+# File: lorem
+# Author: James Stacy, Hexxus Web Solutions
+# Description: A command-line tool to generate Lorem Ipsum filler text by word,
+# sentence, or paragraph.
+# Usage: lorem [-p <num>] | [-s <num>] | [-w <num>]
+
+# --- Global Configuration ---
+
+# The full standard Lorem Ipsum text.
+lorem_ipsum_text='Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+
+# Create a single array of all words, splitting by whitespace, with punctuation stripped.
+lorem_ipsum_words=($(echo "$lorem_ipsum_text" | tr -d '.,'))
+
+# The total number of words available in the source.
+lorem_ipsum_total_words="${#lorem_ipsum_words[@]}"
+
+
+# --- Functions ---
+
+# Function: usage
+# Description: Prints the script's usage information.
+usage() {
+    echo "Usage: $0 [-p <num>] | [-s <num>] | [-w <num>]"
+    echo "  -p <num>: Generate <num> paragraphs (defaults to 1 if no flag is provided)"
+    echo "  -s <num>: Generate <num> sentences"
+    echo "  -w <num>: Generate <num> words"
+    echo ""
+    echo "Example: $0 -s 5  # Generates 5 sentences"
+}
+
+# Function: validate_input
+# Description: Checks if the argument is a positive integer.
+# Arguments: $1 - The value to check.
+validate_input() {
+    local value="$1"
+
+    if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
+        echo "Error: Count '$value' must be a positive integer." >&2
+        usage
+        exit 1
+    fi
+}
+
+# Function: _get_lorem_sentences (Helper function)
+# Description: Safely splits the lorem_ipsum_text into an array of sentences.
+# Output: Prints the array elements separated by newlines for reliable array assignment.
+_get_lorem_sentences() {
+    local temp_file
+    local sentence
+    
+    # Use mktemp to create a safe temporary file (Bashism/Style Guide).
+    temp_file=$(mktemp)
+    
+    # Pipe the text, replacing periods with newlines, and use a while loop
+    # with IFS= read -r to process sentences reliably without IFS issues.
+    echo "$lorem_ipsum_text" | tr '.' '\n' | while IFS= read -r sentence; do
+        # Trim leading/trailing whitespace
+        sentence="${sentence#"${sentence%%[![:space:]]*}"}"
+        sentence="${sentence%"${sentence##*[![:space:]]}"}"
+
+        if [[ -n "$sentence" ]]; then
+            echo "$sentence" >> "$temp_file"
+        fi
+    done
+    
+    # Output the processed sentences separated by newlines.
+    cat "$temp_file"
+    
+    # Clean up the temporary file immediately.
+    rm "$temp_file"
+}
+
+# Function: generate_words
+# Arguments: $1 - The number of words to generate.
+generate_words() {
+    local num_words="$1"
+    local i=0
+    local output=""
+
+    validate_input "$num_words"
+
+    for ((i=0; i < num_words; i++)); do
+        local index=$((i % lorem_ipsum_total_words))
+        output+="${lorem_ipsum_words[index]} "
+    done
+
+    echo "${output%% }"
+}
+
+# Function: generate_sentences
+# Arguments: $1 - The number of sentences to generate.
+generate_sentences() {
+    local num_sentences="$1"
+    local i=0
+    local output=""
+    local sentence
+    local lorem_ipsum_sentences=()
+    local lorem_ipsum_total_sentences
+
+    validate_input "$num_sentences"
+
+    # Set IFS to newline to read the output of _get_lorem_sentences into the array correctly.
+    local IFS=$'\n'
+    lorem_ipsum_sentences=($(_get_lorem_sentences))
+    
+    lorem_ipsum_total_sentences="${#lorem_ipsum_sentences[@]}"
+    
+    if ((lorem_ipsum_total_sentences == 0)); then
+        echo "Error: Could not parse sentences from source text." >&2
+        exit 1
+    fi
+    
+    for ((i=0; i < num_sentences; i++)); do
+        local index=$((i % lorem_ipsum_total_sentences))
+        
+        sentence="${lorem_ipsum_sentences[index]}"
+        
+        # Re-add the period and space after the sentence.
+        if [[ -n "$sentence" ]]; then
+            output+="$sentence. "
+        fi
+    done
+
+    echo "${output%% }"
+}
+
+# Function: generate_paragraphs
+# Arguments: $1 - The number of paragraphs to generate.
+generate_paragraphs() {
+    local num_paragraphs="$1"
+    local i=0
+    local paragraph
+    
+    local lorem_ipsum_total_sentences
+    local sentences=()
+
+    # Calculate total sentences to know how many to request from generate_sentences.
+    local IFS=$'\n'
+    sentences=($(_get_lorem_sentences))
+    lorem_ipsum_total_sentences="${#sentences[@]}"
+    
+    validate_input "$num_paragraphs"
+
+    # Generate the paragraph (all sentences) once for efficiency.
+    paragraph=$(generate_sentences "$lorem_ipsum_total_sentences")
+
+    for ((i=0; i < num_paragraphs; i++)); do
+        echo "$paragraph"
+        echo "" # Extra newline for paragraph separation
+    done
+}
+
+
+# --- Main Execution ---
+
+# Process command-line options using getopts.
+# Note the colons (:p:s:w:) which enforce mandatory arguments.
+while getopts ":p:s:w:" opt; do
+    case "$opt" in
+        p) # Paragraphs option
+            generate_paragraphs "$OPTARG"
+            exit 0
+            ;;
+        s) # Sentences option
+            generate_sentences "$OPTARG"
+            exit 0
+            ;;
+        w) # Words option
+            generate_words "$OPTARG"
+            exit 0
+            ;;
+        :) # Missing argument (e.g., 'lorem -p' without a number)
+            echo "Error: -$OPTARG requires a count (e.g., -$OPTARG 3)." >&2
+            usage
+            exit 1
+            ;;
+        \?) # Invalid option
+            echo "Error: Invalid option -$OPTARG" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+# Check if arguments remain after parsing (e.g., 'lorem -p 1 foo').
+# $OPTIND holds the index of the next argument to process.
+if [[ $OPTIND -le $# ]]; then
+    echo "Error: Unknown arguments provided." >&2
+    usage
+    exit 1
+fi
+
+# Default case: No arguments/options were provided (e.g., just 'lorem').
+if [[ $# -eq 0 ]]; then
+    generate_paragraphs 1
+    exit 0
+fi
