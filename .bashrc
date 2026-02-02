@@ -1,6 +1,4 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
-# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
-# for examples
 
 # If not running interactively, don't do anything
 case $- in
@@ -8,145 +6,60 @@ case $- in
       *) return;;
 esac
 
-# don't put duplicate lines or lines starting with space in the history.
-# See bash(1) for more options
-HISTCONTROL=ignoreboth
-
-# append to the history file, don't overwrite it
+# Append to the history file, don't overwrite it
 shopt -s histappend
 
-# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
-
-# check the window size after each command and, if necessary,
-# update the values of LINES and COLUMNS.
+# Check the window size after each command
 shopt -s checkwinsize
 
-# If set, the pattern "**" used in a pathname expansion context will
-# match all files and zero or more directories and subdirectories.
-#shopt -s globstar
+# Enable extended globbing
+shopt -s extglob
 
-# make less more friendly for non-text input files, see lesspipe(1)
+# Bash version >= 4 features
+shopt -s autocd   2>/dev/null || true
+shopt -s dirspell 2>/dev/null || true
+shopt -s cdspell  2>/dev/null || true
+
+# Make less more friendly for non-text input files
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
-# set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
-    debian_chroot=$(cat /etc/debian_chroot)
-fi
-
-# set a fancy prompt (non-color, unless we know we "want" color)
-case "$TERM" in
-    xterm-color|*-256color) color_prompt=yes;;
-esac
-
-# uncomment for a colored prompt, if the terminal has the capability; turned
-# off by default to not distract the user: the focus in a terminal window
-# should be on the output of commands, not on the prompt
-force_color_prompt=yes
-
-if [ -n "$force_color_prompt" ]; then
-    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
-    else
-	color_prompt=
-    fi
-fi
-
-if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
-else
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
-fi
-unset color_prompt force_color_prompt
-
-# If this is an xterm set the title to user@host:dir
-case "$TERM" in
-xterm*|rxvt*)
-    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
-    ;;
-*)
-    ;;
-esac
-
-# enable color support of ls and also add handy aliases
+# Enable color support of ls and common tools
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
-
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
 fi
 
-# colored GCC warnings and errors
-#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
-
-# some more ls aliases
+# Basic ls aliases
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 
-# Add an "alert" alias for long running commands.  Use like so:
-#   sleep 10; alert
+# Alert alias for long running commands (use: sleep 10; alert)
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
-# alias to simplify dotfile management
+# Dotfile management alias
 alias dotfiles='/usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME"'
 
-# Set environment
-export EDITOR='vim'
-export GREP_COLOR='mt 1;36'
-export HISTCONTROL='ignoredups'
-export HISTSIZE=5000
-export HISTFILESIZE=5000
-export LSCOLORS='ExGxbEaECxxEhEhBaDaCaD'
-export PAGER='less'
-export TZ='America/New_York'
-export VISUAL='vim'
+# Load modular configuration files
+[ -f ~/.bash_exports ]   && . ~/.bash_exports
+[ -f ~/.bash_prompt ]    && . ~/.bash_prompt
+[ -f ~/.bash_aliases ]   && . ~/.bash_aliases
+[ -f ~/.bash_functions ] && . ~/.bash_functions
 
-# Support colors in less
-export LESS_TERMCAP_mb=$(tput bold; tput setaf 1)
-export LESS_TERMCAP_md=$(tput bold; tput setaf 1)
-export LESS_TERMCAP_me=$(tput sgr0)
-export LESS_TERMCAP_se=$(tput sgr0)
-export LESS_TERMCAP_so=$(tput bold; tput setaf 3; tput setab 4)
-export LESS_TERMCAP_ue=$(tput sgr0)
-export LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 2)
-export LESS_TERMCAP_mr=$(tput rev)
-export LESS_TERMCAP_mh=$(tput dim)
-export LESS_TERMCAP_ZN=$(tput ssubm)
-export LESS_TERMCAP_ZV=$(tput rsubm)
-export LESS_TERMCAP_ZO=$(tput ssupm)
-export LESS_TERMCAP_ZW=$(tput rsupm)
-
-# Shell Options
-shopt -s cdspell
-shopt -s checkwinsize
-shopt -s extglob
-
-# Bash Version >= 4
-shopt -s autocd   2>/dev/null || true
-shopt -s dirspell 2>/dev/null || true
-
-# Load external files
-. ~/.bash_aliases    2>/dev/null || true
-. ~/.bashrc.local    2>/dev/null || true
-
-# load completion
-. /etc/bash/bash_completion 2>/dev/null ||
-	. ~/.bash_completion 2>/dev/null
-
-true
-
-# Add ~/.local/bin to PATH if it exists
-if [ -d "$HOME/.local/bin" ] ; then
-    PATH="$HOME/.local/bin:$PATH"
+# Load bash completion
+if [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+elif [ -f /etc/bash/bash_completion ]; then
+    . /etc/bash/bash_completion
+elif [ -f ~/.bash_completion ]; then
+    . ~/.bash_completion
 fi
-export GOPATH=$HOME/go
-export PATH=$PATH:$GOPATH/bin
+
+# fzf integration (if installed)
+[ -f ~/.fzf.bash ] && . ~/.fzf.bash
+
+# Local customizations (not tracked in dotfiles)
+[ -f ~/.bashrc.local ] && . ~/.bashrc.local

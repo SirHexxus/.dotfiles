@@ -1,0 +1,42 @@
+# Dotfiles gitignore - allowlist approach
+# Ignore everything by default, then explicitly allow tracked files
+*
+
+# Shell configuration
+!.bashrc
+!.bash_aliases
+!.bash_functions
+!.bash_exports
+!.bash_prompt
+!.inputrc
+
+# Editor configuration
+!.vimrc
+
+# Git configuration
+!.gitconfig
+
+# Tmux
+!.tmux.conf
+
+# SSH template (not the real config)
+!.ssh/
+.ssh/*
+!.ssh/config.template
+
+# Dotfile management
+!.dotfile-scripts/
+!.dotfile-scripts/**
+!.gitignore-dotfiles
+
+# Local scripts
+!.local/
+.local/*
+!.local/bin/
+.local/bin/*
+!.local/bin/lorem
+!.local/bin/mp3meta
+!.local/bin/mp3update
+
+# Documentation
+!README.md
