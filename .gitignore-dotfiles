@@ -38,5 +38,17 @@
 !.local/bin/mp3meta
 !.local/bin/mp3update
 
+# Claude Code config (machine-portable; credentials excluded)
+!.claude/
+.claude/*
+!.claude/CLAUDE.md
+!.claude/settings.json
+!.claude/statusline-command.sh
+!.claude/hooks/
+.claude/hooks/*
+!.claude/hooks/pre-tool-use.sh
+!.claude/hooks/post-tool-use.sh
+!.claude/hooks/stop.sh
+
 # Documentation
 !README.md
