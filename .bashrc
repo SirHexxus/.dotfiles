@@ -46,8 +46,9 @@ alias dotfiles='/usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME"'
 # Load modular configuration files
 [ -f ~/.bash_exports ]   && . ~/.bash_exports
 [ -f ~/.bash_prompt ]    && . ~/.bash_prompt
-[ -f ~/.bash_aliases ]   && . ~/.bash_aliases
-[ -f ~/.bash_functions ] && . ~/.bash_functions
+[ -f ~/.bash_aliases ]       && . ~/.bash_aliases
+[ -f ~/.bash_aliases.local ] && . ~/.bash_aliases.local
+[ -f ~/.bash_functions ]     && . ~/.bash_functions
 
 # Load bash completion
 if [ -f /etc/bash_completion ]; then

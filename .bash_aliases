@@ -18,9 +18,6 @@ alias paste='xclip -selection clipboard -o'
 # Homelab
 alias hlactivate='source ~/homelab-management/.venv/bin/activate'
 
-# Applications
-alias megamek='java -jar /home/james/megamek/MekHQ-0.50.06/MegaMek.jar &'
-
 # Safety nets
 alias rm='rm -I'
 alias mv='mv -i'
