@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# =============================================================================
+# battery-warn
+# Poll battery level and fire visual + auditory alerts at configurable
+# thresholds. Designed to be called by a systemd user timer every 60 seconds.
+#
+# State is stored in /run/user/$UID/battery-warn-level (tmpfs — resets on
+# reboot). Only fires when the battery is Discharging; resets state when
+# charging resumes so warnings re-trigger on the next discharge cycle.
+# =============================================================================
+set -uo pipefail
+
+readonly BATTERY_PATH="/sys/class/power_supply/BAT0"
+readonly STATE_FILE="/run/user/$(id -u)/battery-warn-level"
+
+# ─── Thresholds and alert behavior ───────────────────────────────────────────
+# THRESHOLD_*   — battery percentage at which each alert fires
+# REPEATS_*     — how many times the alert sound plays at each level
+
+readonly THRESHOLD_LOW=20
+readonly THRESHOLD_CRITICAL=10
+readonly THRESHOLD_URGENT=5
+
+readonly REPEATS_LOW=1
+readonly REPEATS_CRITICAL=2
+readonly REPEATS_URGENT=3
+
+# ─── Sound files ─────────────────────────────────────────────────────────────
+
+readonly SOUND_WARN="/usr/share/sounds/freedesktop/stereo/dialog-warning.oga"
+readonly SOUND_CRITICAL="/usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga"
+
+# ─── Helpers ─────────────────────────────────────────────────────────────────
+
+get_battery_level() {
+	cat "${BATTERY_PATH}/capacity"
+}
+
+get_battery_status() {
+	cat "${BATTERY_PATH}/status"
+}
+
+get_last_warned() {
+	if [[ -f "${STATE_FILE}" ]]; then
+		cat "${STATE_FILE}"
+	else
+		echo "100"
+	fi
+}
+
+save_warned_level() {
+	echo "$1" > "${STATE_FILE}"
+}
+
+play_sound() {
+	local sound="$1"
+	local repeats="${2:-1}"
+	local i
+	for (( i=0; i<repeats; i++ )); do
+		paplay "${sound}"
+	done
+}
+
+send_notification() {
+	local urgency="$1"
+	local title="$2"
+	local body="$3"
+	notify-send \
+		--urgency="${urgency}" \
+		--app-name="Battery Monitor" \
+		--icon="battery-caution" \
+		"${title}" "${body}"
+}
+
+# ─── Main ─────────────────────────────────────────────────────────────────────
+
+main() {
+	local status
+	status="$(get_battery_status)"
+
+	# Reset state when plugged in so warnings re-trigger next discharge cycle
+	if [[ "${status}" != "Discharging" ]]; then
+		save_warned_level 100
+		return 0
+	fi
+
+	local level last_warned
+	level="$(get_battery_level)"
+	last_warned="$(get_last_warned)"
+
+	if (( level <= THRESHOLD_URGENT && last_warned > THRESHOLD_URGENT )); then
+		send_notification critical "Plug in NOW" "Battery at ${level}% — plug in immediately!"
+		play_sound "${SOUND_CRITICAL}" "${REPEATS_URGENT}"
+		save_warned_level "${THRESHOLD_URGENT}"
+
+	elif (( level <= THRESHOLD_CRITICAL && last_warned > THRESHOLD_CRITICAL )); then
+		send_notification critical "Battery Critical" "Battery at ${level}% — find a charger soon."
+		play_sound "${SOUND_CRITICAL}" "${REPEATS_CRITICAL}"
+		save_warned_level "${THRESHOLD_CRITICAL}"
+
+	elif (( level <= THRESHOLD_LOW && last_warned > THRESHOLD_LOW )); then
+		send_notification normal "Battery Low" "Battery at ${level}% — consider plugging in."
+		play_sound "${SOUND_WARN}" "${REPEATS_LOW}"
+		save_warned_level "${THRESHOLD_LOW}"
+	fi
+}
+
+main "$@"

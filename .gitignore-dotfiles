@@ -37,6 +37,17 @@
 !.local/bin/lorem
 !.local/bin/mp3meta
 !.local/bin/mp3update
+!.local/bin/battery-warn
+
+# Systemd user units (laptop-only: battery warning service)
+!.config/
+.config/*
+!.config/systemd/
+.config/systemd/*
+!.config/systemd/user/
+.config/systemd/user/*
+!.config/systemd/user/battery-warn.service
+!.config/systemd/user/battery-warn.timer
 
 # Claude Code config (machine-portable; credentials excluded)
 !.claude/
