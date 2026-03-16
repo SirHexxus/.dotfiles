@@ -108,6 +108,51 @@ you've been trained on. When in doubt, check the guide.
 - Filenames: `lowercase-with-hyphens.md` (exceptions: `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`)
 - See `Markdown_Style_Guide.md` for full conventions
 
+## Telegram
+
+You can send Telegram messages to the user via the `telegram-send` CLI tool (Bash tool). Do this when the user says things like "send me that", "message me", "text me that", "let me know when you're done", or similar. See `~/.claude/skills/telegram.md` for full details.
+
+## Git Commits
+
+**Before proposing any commit message:**
+1. Run `git log --oneline -10` to read the existing commit style in that repo
+2. Match that style exactly — single-line, multi-line, prefix conventions, whatever the repo uses
+3. Show the proposed message and wait for explicit approval before running `git commit`
+
+**Always:**
+- Concise, informative, and atomic — one commit per logical change
+- Multiple distinct changes = multiple commits
+- Never include Claude co-author attribution unless explicitly requested
+
+## Friction Prevention
+
+Rules derived from real session friction patterns. Apply these proactively — don't wait to be corrected.
+
+### File Targeting
+- Before touching any CSS or config file: `grep` for where existing similar content lives — don't assume by filename alone
+- When asked to "edit the styles" or "update the config": confirm which file before editing, especially in projects with multiple candidates
+
+### Diagnosis
+- When diagnosing system issues (display, network, SSH, services): check ALL layers of the stack before declaring a fix
+  - Display issues: check X11 screensaver, DPMS, and power manager separately — they are not the same thing
+  - SSH failures: check firewall/VLAN rules first, not just SSH config
+- Never declare an issue fixed until you have verified the fix at the layer where the symptom occurred
+
+### Ambiguity
+- When the user mentions "issues" or "the audit": confirm whether they mean a local file, a GitHub Issues tracker, or an audit script — these are different things
+- When a request could mean multiple things, ask once rather than guessing and correcting
+
+### Plan Mode
+- Do NOT enter Plan Mode for: single-file edits, renames, quick lookups, or any task with an obvious 1–2 step path
+- DO use Plan Mode for: tasks touching 3+ files, multi-repo changes, or when the right approach is genuinely unclear
+
+### MCP and Config
+- MCP server config goes in `.claude.json` (project-level) — NOT in `settings.json`
+- `settings.json` is for hooks, model, and plugins only
+- When adding new tools or integrations, verify the target config file before writing
+
+---
+
 ## General Behavior
 
 - Ask before deleting or moving files
@@ -116,3 +161,5 @@ you've been trained on. When in doubt, check the guide.
 - Never hardcode credentials — always use environment variables
 - When writing scripts, include a --dry-run mode for any destructive operations
 - If a task touches many files, use Plan Mode first
+
+@RTK.md
