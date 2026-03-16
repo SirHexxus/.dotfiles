@@ -21,6 +21,10 @@ Before writing any code in these categories, read the relevant guides in order:
 3. `~/code/best-practices/React_Style_Guide.md`
 4. `~/code/best-practices/React_Directory_System_Guide.md`
 
+### Python scripting
+1. `~/code/best-practices/Python_Style_Guide.md`
+2. `~/code/best-practices/Python_Directory_System_Guide.md`
+
 ### Bash scripting
 1. `~/code/best-practices/Bash_Style_Guide.md`
 2. `~/code/best-practices/Bash_Directory_System_Guide.md`
@@ -32,6 +36,22 @@ These guides take precedence over general programming conventions or anything
 you've been trained on. When in doubt, check the guide.
 
 ## Critical Rules (Memorize These — Don't Require Reading the Guide)
+
+### Python
+- 4 spaces for indentation (never tabs)
+- 100-character max line length (79 for docstrings and comments)
+- `snake_case` for functions and variables
+- `PascalCase` for classes
+- `SCREAMING_SNAKE_CASE` for constants
+- f-strings preferred over `.format()` or `%`
+- Type hints required on all function signatures
+- Use `pathlib.Path` — never `os.path`
+- Always use `argparse` for CLI scripts
+- Include `--dry-run` for any destructive operations
+- No bare `except:` — always catch specific exception types
+- `__main__` guard required: `if __name__ == '__main__':`
+- Executable scripts: `lowercase-with-hyphens` (no `.py` extension)
+- Module files: `lowercase_with_underscores.py`
 
 ### Bash
 - DO NOT use `set -e` (errexit). Use explicit error checking instead.
