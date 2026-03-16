@@ -1,5 +1,9 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 
+# Local customizations (not tracked in dotfiles) — loaded before interactive check
+# so env vars are available in non-interactive shells (e.g. Claude Code tools)
+[ -f ~/.bashrc.local ] && . ~/.bashrc.local
+
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;
@@ -61,6 +65,4 @@ fi
 
 # fzf integration (if installed)
 [ -f ~/.fzf.bash ] && . ~/.fzf.bash
-
-# Local customizations (not tracked in dotfiles)
-[ -f ~/.bashrc.local ] && . ~/.bashrc.local
+export PATH="$HOME/scripts:$PATH"
