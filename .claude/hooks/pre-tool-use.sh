@@ -11,6 +11,26 @@ tool_name="$(printf '%s' "$input" | jq -r '.tool_name // empty')"
 
 command="$(printf '%s' "$input" | jq -r '.tool_input.command // empty')"
 
+# ── Git commit guard ──────────────────────────────────────────────────────────
+# Block `git commit` unless the command is prefixed with APPROVED=1
+# Required process: check git log, show proposed message, get explicit approval
+# Match `git commit` only at command positions: start of line/string, or after
+# &&, ||, ;, |, or $( — prevents false positives from echo/grep/strings
+GIT_COMMIT_PATTERN='(^|&&|\|\||[;|]|\$\()\s*([A-Z_]+=\S+\s+)*git\s+commit'
+APPROVED_PATTERN='(^|&&|\|\||[;|]|\$\()\s*APPROVED=1\s+git\s+commit'
+if printf '%s' "$command" | grep -qP "$GIT_COMMIT_PATTERN"; then
+	if ! printf '%s' "$command" | grep -qP "$APPROVED_PATTERN"; then
+		printf 'BLOCKED: git commit requires explicit approval first.\n\n'
+		printf 'Required process:\n'
+		printf '  1. Run: git log --oneline -10  (read existing commit style)\n'
+		printf '  2. Run: git diff --staged       (review what will be committed)\n'
+		printf '  3. Show the proposed commit message — wait for your approval\n'
+		printf '  4. Prefix the commit with APPROVED=1 after you approve\n\n'
+		printf 'Example: APPROVED=1 git commit -m "fix: ..."\n'
+		exit 2
+	fi
+fi
+
 dangerous_patterns=(
 	'rm\s+-[a-zA-Z]*r[a-zA-Z]*f'
 	'rm\s+-[a-zA-Z]*f[a-zA-Z]*r'
